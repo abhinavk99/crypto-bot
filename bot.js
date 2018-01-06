@@ -19,16 +19,12 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 			// If currency found, info is a JS object wrapped in an array
 			// If not found, info is just a JS object
 			console.log(info);
-			// Obj is a JS object if currency found, otherwise it is undefined
-			var obj = info[0];
+			// Info[0] is a JS object if currency found, otherwise it is undefined
 			if (info[0]) {
-				var output = '';
-				for (var key in obj) {
-					output += (key.replace(/_/g, ' ') + ': ' + obj[key] + '\n');
-				}
-				return msg.reply.text(output, {asReply: true});
+				return msg.reply.text(formatInfo(info[0]), {asReply: true});
+			} else {
+				return msg.reply.text('No currency found with that name.', {asReply: true});
 			}
-			return msg.reply.text('No currency found with that name.', {asReply: true});
 		}).catch((err) => {
 			console.log(err);
 		});
@@ -39,8 +35,8 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 			console.log(info);
 			var output = '';
 			info.forEach((obj) => {
-				var sym = obj['symbol'];
-				output += (obj['name'] + ', ' + sym + ', ' + obj['price_usd'] + ' ' + sym + '/USD\n');
+				var price = parseFloat(obj['price_usd']).toLocaleString();
+				output += (obj['name'] + ' (' + obj['symbol'] + '), Price USD: $' + price + '\n');
 			});
 			return msg.reply.text(output, {asReply: true})
 		}).catch((err) => {
@@ -56,14 +52,35 @@ bot.on('/global', (msg) => {
 	.then((info) => {
 		// Info is a JS object
 		console.log(info);
-		var output = '';
-		for (var key in info) {
-			output += (key.replace(/_/g, ' ') + ': ' + info[key] + '\n');
-		}
-		return msg.reply.text(output, {asReply: true});
+		return msg.reply.text(formatInfo(info), {asReply: true});
+		// return msg.reply.text(output, {asReply: true});
 	}).catch((err) => {
 		console.log(err);
 	});
 });
 
 bot.start();
+
+// Formats the output of the json for better readability
+function formatInfo(info) {
+	var output = info['name'] + ' (' + info['symbol'] + ')\n';
+	output += ('CoinMarketCap ID: ' + info['id'] + '\n')
+	output += ('CoinMarketCap Rank: ' + info['rank'] + '\n\n');
+
+	output += ('Price USD: $' + parseFloat(info['price_usd']).toLocaleString() + '\n');
+	output += ('Price BTC: ' + info['price_btc'] + ' BTC\n\n');
+
+	output += ('Market Cap: $' + parseFloat(info['market_cap_usd']).toLocaleString() + '\n');
+	output += ('24h Volume: $' + parseFloat(info['24h_volume_usd']).toLocaleString() + '\n');
+	output += ('Available Supply: ' + parseFloat(info['available_supply']).toLocaleString() + '\n');
+	output += ('Total Supply: ' + parseFloat(info['total_supply']).toLocaleString() + '\n');
+	if (info['max_supply']) {
+		output += ('Maximum Supply: ' + parseFloat(info['max_supply']).toLocaleString() + '\n');
+	}
+
+	output += ('\nChange 1h: ' + parseFloat(info['percent_change_1h']).toLocaleString() + '%\n');
+	output += ('Change 24h: ' + parseFloat(info['percent_change_24h']).toLocaleString() + '%\n');
+	output += ('Change 7d: ' + parseFloat(info['percent_change_7d']).toLocaleString() + '%\n\n');
+
+	return output + 'Last Updated: ' + new Date(parseInt(info['last_updated']) * 1000).toString();
+}
