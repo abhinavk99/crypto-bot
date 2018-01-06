@@ -7,8 +7,8 @@ Talk to @coinmarketcap_info_bot on Telegram!
 
 Commands:
 
-/info <name> for information on the coin with that name
+/info \<name\> for information on the coin with that name
 
-/info <rank> for information on the coin with that rank
+/info \<rank\> for information on the coin with that rank
 
 /global for total market information
