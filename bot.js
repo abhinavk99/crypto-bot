@@ -5,12 +5,22 @@ const CoinMarketCap = require('coinmarketcap-api');
 const bot = new TeleBot(Config.token);
 const cmc = new CoinMarketCap();
 
-bot.on('/start', (msg) => msg.reply.text('/info <name> for information on a coin\n'
-	+ '/info <number> for information on the top n coins\n'
-	+ '/global for total market information'));
+// 10 API calls a minute are allowed
+var calls = 0;
+
+bot.on('/start', (msg) => {
+	msg.reply.text('/info <name> for information on the coin with that name\n'
+		+ '/info <rank> for information on the coin with that rank\n'
+		+ '/global for total market information');
+	resetNumCalls();
+});
 
 // Ticker information
 bot.on(/^\/info (.+)$/, (msg, props) => {
+	if (calls > 10) {
+		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+	}
+	calls++;
 	var text = props.match[1];
 	if (isNaN(text)) {
 		// Bot replies with information on the currency if found
@@ -33,12 +43,7 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 		.then((info) => {
 			// Info is an array of JS objects
 			console.log(info);
-			var output = '';
-			info.forEach((obj) => {
-				var price = parseFloat(obj['price_usd']).toLocaleString();
-				output += (obj['name'] + ' (' + obj['symbol'] + '), Price USD: $' + price + '\n');
-			});
-			return msg.reply.text(output, {asReply: true})
+			return msg.reply.text(formatInfo(info[parseInt(text) - 1]), {asReply: true});
 		}).catch((err) => {
 			console.log(err);
 		});
@@ -48,6 +53,10 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 
 // Total market information
 bot.on('/global', (msg) => {
+	if (calls > 10) {
+		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+	}
+	calls++;
 	cmc.getGlobal()
 	.then((info) => {
 		// Info is a JS object
@@ -83,4 +92,10 @@ function formatInfo(info) {
 	output += ('Change 7d: ' + parseFloat(info['percent_change_7d']).toLocaleString() + '%\n\n');
 
 	return output + 'Last Updated: ' + new Date(parseInt(info['last_updated']) * 1000).toString();
+}
+
+// Resets number of calls to 0 every minute
+function resetNumCalls() {
+	calls = 0;
+	setTimeout(resetNumCalls, 60000);
 }
