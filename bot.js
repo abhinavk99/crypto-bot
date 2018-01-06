@@ -12,7 +12,6 @@ bot.on('/start', (msg) => {
 	msg.reply.text('/info <name> for information on the coin with that name\n'
 		+ '/info <rank> for information on the coin with that rank\n'
 		+ '/global for total market information');
-	resetNumCalls();
 });
 
 // Ticker information
@@ -95,7 +94,9 @@ function formatInfo(info) {
 }
 
 // Resets number of calls to 0 every minute
+resetNumCalls();
+setInterval(resetNumCalls, 60000);
 function resetNumCalls() {
+	console.log('Resetting number of calls');
 	calls = 0;
-	setTimeout(resetNumCalls, 60000);
 }
