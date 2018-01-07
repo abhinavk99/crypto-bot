@@ -7,8 +7,10 @@ Talk to @coinmarketcap_info_bot on Telegram!
 
 Commands:
 
-/info \<name\> for information on the coin with that name
+/info \<name\> for information on the coin with that name (e.g. /info Bitcoin gives information about BTC)
 
-/info \<rank\> for information on the coin with that rank
+/info \<rank\> for information on the coin with that rank (e.g. /info 1 gives information about BTC)
 
 /global for total market information
+
+/price <ticker> for latest Binance exchange price (e.g. /price XRPBTC gives XRP/BTC exchange price)

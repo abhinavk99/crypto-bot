@@ -1,9 +1,14 @@
-const TeleBot = require('telebot');
 const Config = require('./config.json');
+const TeleBot = require('telebot');
 const CoinMarketCap = require('coinmarketcap-api');
+const binance = require('node-binance-api');
 
-const bot = new TeleBot(Config.token);
+const bot = new TeleBot(Config.telegramToken);
 const cmc = new CoinMarketCap();
+binance.options({
+	'APIKEY': Config.binanceKey,
+	'APISECRET': Config.binanceSecret
+});
 
 // 10 API calls a minute are allowed
 var calls = 0;
@@ -14,7 +19,7 @@ bot.on('/start', (msg) => {
 		+ '/global for total market information');
 });
 
-// Ticker information
+// Ticker information from CoinMarketCap
 bot.on(/^\/info (.+)$/, (msg, props) => {
 	if (calls > 10) {
 		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
@@ -50,7 +55,7 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 	
 });
 
-// Total market information
+// Total market information from CoinMarketCap
 bot.on('/global', (msg) => {
 	if (calls > 10) {
 		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
@@ -65,6 +70,28 @@ bot.on('/global', (msg) => {
 	}).catch((err) => {
 		console.log(err);
 	});
+});
+
+// Latest exchange price from Binance
+bot.on(/^\/price (.+)$/, (msg, props) => {
+	if (calls > 10) {
+		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+	}
+	calls++;
+	var text = props.match[1];
+	if (isNaN(text)) {
+		console.log('hello');
+		binance.prices(function(ticker) {
+			for (var key in ticker) {
+				if (key == text.toUpperCase()) {
+					return msg.reply.text('Exchange price for ' + key + ' is ' + ticker[key], {asReply: true});
+				}
+			}
+			return msg.reply.text('Exchange not found.', {asReply: true});
+		});
+	} else {
+		return msg.reply.text('A ticker can\'t be a number.', {asReply: true});
+	}
 });
 
 bot.start();
