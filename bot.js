@@ -108,7 +108,8 @@ bot.start();
 function formatInfo(info) {
 	var output = info['name'] + ' (' + info['symbol'] + ')\n';
 	output += ('CoinMarketCap ID: ' + info['id'] + '\n')
-	output += ('CoinMarketCap Rank: ' + info['rank'] + '\n\n');
+	output += ('CoinMarketCap Rank: ' + info['rank'] + '\n');
+	output += ('https://coinmarketcap.com/currencies/' + info['id'] + '/\n\n');
 
 	output += ('Price USD: $' + parseFloat(info['price_usd']).toLocaleString() + '\n');
 	output += ('Price BTC: ' + info['price_btc'] + ' BTC\n\n');
