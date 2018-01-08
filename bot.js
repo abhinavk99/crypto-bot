@@ -65,8 +65,11 @@ bot.on('/global', (msg) => {
 	.then((info) => {
 		// Info is a JS object
 		console.log(info);
-		return msg.reply.text(formatInfo(info), {asReply: true});
-		// return msg.reply.text(output, {asReply: true});
+		var output = '';
+		for (var key in info) {
+			output += (key.replace(/_/g, ' ') + ': ' + info[key] + '\n');
+		}
+		return msg.reply.text(output, {asReply: true});
 	}).catch((err) => {
 		console.log(err);
 	});
