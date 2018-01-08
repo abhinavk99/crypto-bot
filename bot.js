@@ -16,7 +16,8 @@ var calls = 0;
 bot.on('/start', (msg) => {
 	msg.reply.text('/info <name> for information on the coin with that name\n'
 		+ '/info <rank> for information on the coin with that rank\n'
-		+ '/global for total market information');
+		+ '/global for total market information\n'
+		+ '/price <ticker> for latest Binance exchange price');
 });
 
 // Ticker information from CoinMarketCap
