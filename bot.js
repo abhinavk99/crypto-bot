@@ -65,10 +65,15 @@ bot.on('/global', (msg) => {
 	.then((info) => {
 		// Info is a JS object
 		console.log(info);
-		var output = '';
-		for (var key in info) {
-			output += (key.replace(/_/g, ' ') + ': ' + info[key] + '\n');
-		}
+		var output = 'Total Market Cap: $' + parseInt(info['total_market_cap_usd']).toLocaleString() + '\n';
+		output += ('Total 24h Volume: $' + parseInt(info['total_24h_volume_usd']).toLocaleString() + '\n');
+		output += ('Bitcoin Percentage of Market Cap: ' + info['bitcoin_percentage_of_market_cap'] + '%\n\n');
+
+		output += ('Number of Active Currencies: ' + info['active_currencies'] + '\n');
+		output += ('Number of Active Assets: ' + info['active_assets'] + '\n');
+		output += ('Number of Active Markets: ' + info['active_markets'] + '\n\n');
+
+		output += ('Last Updated: ' + new Date(parseInt(info['last_updated']) * 1000).toString());
 		return msg.reply.text(output, {asReply: true});
 	}).catch((err) => {
 		console.log(err);
