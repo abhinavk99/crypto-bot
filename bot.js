@@ -93,7 +93,18 @@ bot.on(/^\/price (.+)$/, (msg, props) => {
 		binance.prices(function(ticker) {
 			for (var key in ticker) {
 				if (key == text.toUpperCase()) {
-					return msg.reply.text('Exchange price for ' + key + ' is ' + ticker[key], {asReply: true});
+					var output = 'Exchange price for ' + key + ' is ' + ticker[key] + '\n';
+					if (key.endsWith('ETH')) {
+						output += ('Approximately $' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.ETHUSDT)).toLocaleString());
+					} else if (key.endsWith('BTC')) {
+						output += ('Approximately $' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.BTCUSDT)).toLocaleString());
+					} else if (key.endsWith('BNB')) {
+						output += ('Approximately $' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.BNBUSDT)).toLocaleString());
+					}
+					return msg.reply.text(output, {asReply: true});
 				}
 			}
 			return msg.reply.text('Exchange not found.', {asReply: true});
