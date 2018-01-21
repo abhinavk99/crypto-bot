@@ -1,10 +1,9 @@
 const Config = require('./config.json');
 const TeleBot = require('telebot');
-const CoinMarketCap = require('coinmarketcap-api');
 const binance = require('node-binance-api');
+const fetch = require('node-fetch');
 
 const bot = new TeleBot(Config.telegramToken);
-const cmc = new CoinMarketCap();
 binance.options({
 	'APIKEY': Config.binanceKey,
 	'APISECRET': Config.binanceSecret
@@ -12,6 +11,9 @@ binance.options({
 
 // 10 API calls a minute are allowed
 var calls = 0;
+
+// Base CoinMarketCap API url
+const baseUrl = 'https://api.coinmarketcap.com/v1/';
 
 bot.on('/start', (msg) => {
 	msg.reply.text('/info <name> for information on the coin with that name\n'
@@ -26,11 +28,12 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
 	}
 	calls++;
-	var text = props.match[1];
+	var text = props.match[1].substring(5);
 	if (isNaN(text)) {
 		// Bot replies with information on the currency if found
-		cmc.getTicker({limit: 1,  currency: text.toLowerCase()})
-		.then((info) => {
+		fetch(baseUrl + 'ticker/' + text.toLowerCase() + '/').then((res) => {
+			return res.json();
+		}).then((info) => {
 			// If currency found, info is a JS object wrapped in an array
 			// If not found, info is just a JS object
 			console.log(info);
@@ -40,17 +43,14 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 			} else {
 				return msg.reply.text('No currency found with that name.', {asReply: true});
 			}
-		}).catch((err) => {
-			console.log(err);
 		});
 	} else {
-		cmc.getTicker({limit: parseInt(text)})
-		.then((info) => {
+		fetch(baseUrl + 'ticker/?limit=' + text).then((res) => {
+			return res.json();
+		}).then((info) => {
 			// Info is an array of JS objects
 			console.log(info);
 			return msg.reply.text(formatInfo(info[parseInt(text) - 1]), {asReply: true});
-		}).catch((err) => {
-			console.log(err);
 		});
 	}
 	
@@ -62,8 +62,9 @@ bot.on('/global', (msg) => {
 		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
 	}
 	calls++;
-	cmc.getGlobal()
-	.then((info) => {
+	fetch(baseUrl + '/global/').then((res) => {
+		return res.json();
+	}).then((info) => {
 		// Info is a JS object
 		console.log(info);
 		var output = 'Total Market Cap: $' + parseInt(info['total_market_cap_usd']).toLocaleString() + '\n';
@@ -76,8 +77,6 @@ bot.on('/global', (msg) => {
 
 		output += ('Last Updated: ' + new Date(parseInt(info['last_updated']) * 1000).toString());
 		return msg.reply.text(output, {asReply: true});
-	}).catch((err) => {
-		console.log(err);
 	});
 });
 
