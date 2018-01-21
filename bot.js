@@ -17,7 +17,7 @@ bot.on('/start', (msg) => {
 	msg.reply.text('/info <name> for information on the coin with that name\n'
 		+ '/info <rank> for information on the coin with that rank\n'
 		+ '/global for total market information\n'
-		+ '/price <ticker> for latest Binance exchange price');
+		+ '/<ticker> for latest Binance ticker price');
 });
 
 // Ticker information from CoinMarketCap
@@ -82,32 +82,36 @@ bot.on('/global', (msg) => {
 });
 
 // Latest exchange price from Binance
-bot.on(/^\/price (.+)$/, (msg, props) => {
+bot.on(/^\/(.+)$/, (msg, props) => {
 	if (calls > 10) {
 		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
 	}
 	calls++;
 	var text = props.match[1];
 	if (isNaN(text)) {
-		console.log('hello');
-		binance.prices(function(ticker) {
+		binance.prices((ticker) => {
+			var output = '';
+			text = text.toUpperCase();
 			for (var key in ticker) {
-				if (key == text.toUpperCase()) {
-					var output = 'Exchange price for ' + key + ' is ' + ticker[key] + '\n';
+				if (key.startsWith(text)) {
+					output += (ticker[key] + ' ' + key.replace(text, text + '/') + ' ');
 					if (key.endsWith('ETH')) {
-						output += ('Approximately $' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.ETHUSDT)).toLocaleString());
+						output += ('($' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.ETHUSDT)).toLocaleString() + ')\n');
 					} else if (key.endsWith('BTC')) {
-						output += ('Approximately $' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.BTCUSDT)).toLocaleString());
+						output += ('($' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.BTCUSDT)).toLocaleString() + ')\n');
 					} else if (key.endsWith('BNB')) {
-						output += ('Approximately $' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.BNBUSDT)).toLocaleString());
+						output += ('($' + 
+							(parseFloat(ticker[key]) * parseFloat(ticker.BNBUSDT)).toLocaleString() + ')\n');
 					}
-					return msg.reply.text(output, {asReply: true});
 				}
 			}
-			return msg.reply.text('Exchange not found.', {asReply: true});
+			if (output == '') {
+				return msg.reply.text('Ticker not found.', {asReply: true});
+			} else {
+				return msg.reply.text(output, {asReply: true});
+			}		
 		});
 	} else {
 		return msg.reply.text('A ticker can\'t be a number.', {asReply: true});

@@ -13,4 +13,4 @@ Commands:
 
 /global for total market information
 
-/price <ticker> for latest Binance exchange price (e.g. /price XRPBTC gives XRP/BTC exchange price)
+/<ticker> for latest Binance ticker price (e.g. /XRP gives XRP price)
