@@ -89,30 +89,32 @@ bot.on(/^\/(.+)$/, (msg, props) => {
 	calls++;
 	var text = props.match[1];
 	if (isNaN(text)) {
-		binance.prices((ticker) => {
-			var output = '';
-			text = text.toUpperCase();
-			for (var key in ticker) {
-				if (key.startsWith(text)) {
-					output += (ticker[key] + ' ' + key.replace(text, text + '/') + ' ');
-					if (key.endsWith('ETH')) {
-						output += ('($' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.ETHUSDT)).toLocaleString() + ')\n');
-					} else if (key.endsWith('BTC')) {
-						output += ('($' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.BTCUSDT)).toLocaleString() + ')\n');
-					} else if (key.endsWith('BNB')) {
-						output += ('($' + 
-							(parseFloat(ticker[key]) * parseFloat(ticker.BNBUSDT)).toLocaleString() + ')\n');
+		if (text.length <= 4) {
+			binance.prices((ticker) => {
+				var output = '';
+				text = text.toUpperCase();
+				for (var key in ticker) {
+					if (key.startsWith(text)) {
+						output += (ticker[key] + ' ' + key.replace(text, text + '/') + ' ');
+						if (key.endsWith('ETH')) {
+							output += ('($' + 
+								(parseFloat(ticker[key]) * parseFloat(ticker.ETHUSDT)).toLocaleString() + ')\n');
+						} else if (key.endsWith('BTC')) {
+							output += ('($' + 
+								(parseFloat(ticker[key]) * parseFloat(ticker.BTCUSDT)).toLocaleString() + ')\n');
+						} else if (key.endsWith('BNB')) {
+							output += ('($' + 
+								(parseFloat(ticker[key]) * parseFloat(ticker.BNBUSDT)).toLocaleString() + ')\n');
+						}
 					}
 				}
-			}
-			if (output == '') {
-				return msg.reply.text('Ticker not found.', {asReply: true});
-			} else {
-				return msg.reply.text(output, {asReply: true});
-			}		
-		});
+				if (output == '') {
+					return msg.reply.text('Ticker not found.', {asReply: true});
+				} else {
+					return msg.reply.text(output, {asReply: true});
+				}       
+			});
+		}
 	} else {
 		return msg.reply.text('A ticker can\'t be a number.', {asReply: true});
 	}
