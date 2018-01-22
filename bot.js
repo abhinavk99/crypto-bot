@@ -21,6 +21,12 @@ var cache = {};
 // Caching Binance ticker data and time of most recent call
 var bin = [];
 
+// Constants for bot error message responses
+const tooMuch = 'You\'re using the bot too much!'; // Prevent overuse of bot calls
+const noCurrency = 'No currency found with that name.'; // Currency not found in /info <name>
+const notNumber = 'A ticker can\'t be a number.'; // Ticker input was a number in /<ticker>
+const noTicker = 'Ticker not found.' // Ticker not found in /<ticker>
+
 bot.on('/start', (msg) => {
 	msg.reply.text('/info <name> for information on the coin with that name\n'
 		+ '/info <rank> for information on the coin with that rank\n'
@@ -31,7 +37,7 @@ bot.on('/start', (msg) => {
 // Ticker information from CoinMarketCap
 bot.on(/^\/info (.+)$/, (msg, props) => {
 	if (calls > 10) {
-		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+		return msg.reply.text(tooMuch, {asReply: true});
 	}
 	calls++;
 	var text = props.match[1].substring(5);
@@ -52,7 +58,7 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
 					cache[text] = info[0];
 					return msg.reply.text(formatInfo(info[0]), {asReply: true});
 				} else {
-					return msg.reply.text('No currency found with that name.', {asReply: true});
+					return msg.reply.text(noCurrency, {asReply: true});
 				}
 			});
 		} else {
@@ -73,7 +79,7 @@ bot.on('/global', (msg) => {
 	// Current time
 	var d = new Date();
 	if (calls > 10) {
-		return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+		return msg.reply.text(tooMuch, {asReply: true});
 	}
 	calls++;
 	// Checks if global command has been called in last 5 minutes
@@ -96,7 +102,7 @@ bot.on(/^\/(.+)$/, (msg, props) => {
 	// Accounts for not responding to one of the other commands
 	if (!text.startsWith('global') && !text.startsWith('info')) {
 		if (calls > 10) {
-			return msg.reply.text('You\'re using the bot too much!', {asReply: true});
+			return msg.reply.text(tooMuch, {asReply: true});
 		}
 		calls++;
 		// Checks if command has been called in the past 5 minutes
@@ -111,7 +117,7 @@ bot.on(/^\/(.+)$/, (msg, props) => {
 					return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), {asReply: true});      
 				});
 			} else {
-				return msg.reply.text('A ticker can\'t be a number.', {asReply: true});
+				return msg.reply.text(notNumber, {asReply: true});
 			}
 		}
 	}	
@@ -177,13 +183,22 @@ function formatBinanceInfo(ticker, text) {
 			}
 		}
 	}
-	return ((output == '') ? 'Ticker not found.' : output);
+	return ((output == '') ? noTicker : output);
 }
 
 // Resets number of calls to 0 every minute
 resetNumCalls();
 setInterval(resetNumCalls, 60000);
 function resetNumCalls() {
-	console.log('Resetting number of calls');
+	console.log('Resetting number of calls at ' + new Date().toString());
 	calls = 0;
+}
+
+// Resets the caches every 2 hours
+resetCaches();
+setInterval(resetCaches, 7200000);
+function resetCaches() {
+	console.log('Resetting caches at ' + new Date().toString());
+	cache = {};
+	bin = [];
 }
