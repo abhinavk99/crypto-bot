@@ -92,13 +92,13 @@ bot.on('/global', (msg) => {
 
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/, (msg, props) => {
+    var text = props.match[1].toLowerCase();
 	// Accounts for not responding to one of the other commands
 	if (!text.startsWith('global') && !text.startsWith('info')) {
 		if (calls > 10) {
 			return msg.reply.text('You\'re using the bot too much!', {asReply: true});
 		}
 		calls++;
-		var text = props.match[1];
 		// Checks if command has been called in the past 5 minutes
 		if (bin[0] !== undefined && Math.floor((new Date() - bin[1]) / 60000 % 60) < 5) {
 			return msg.reply.text(formatBinanceInfo(bin[0], text.toUpperCase()), {asReply: true});
