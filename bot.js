@@ -175,23 +175,36 @@ function formatGlobalInfo(info) {
 
 // Formats the output for Binance exchange price
 function formatBinanceInfo(ticker, text) {
+  // The keys in the ticker object are exchanges in format equivalent to VENETH
+  // for (var key in ticker) {
+  //   // Gets all the exchange prices for the ticker except for USDT
+  //   if (key.startsWith(text) && !key.endsWith('USDT')) {
+  //     if (key.endsWith('USDT')) {
+  //       var decimalPlaces = ticker[key].length;
+  //     } else {
+  //       output += (ticker[key] + ' ' + key.replace(text, text + '/') + ' ');
+  //       if (key.endsWith('ETH')) {
+  //         output += ('($' + formatBin(ticker[key], ticker.ETHUSDT) + ')\n');
+  //       } else if (key.endsWith('BTC')) {
+  //         output += ('($' + formatBin(ticker[key], ticker.BTCUSDT) + ')\n');
+  //       } else if (key.endsWith('BNB')) {
+  //         output += ('($' + formatBin(ticker[key], ticker.BNBUSDT) + ')\n');
+  //       }
+  //     }
+  //   }
+  // }
+  // Checks if there exists an exchange in the ticker with each of the pairs
+  var tradingPairs = ['ETH', 'BTC', 'BNB'];
   var output = '';
-  // Each key is an exchange in a format like VENETH or NEOBTC
-  for (var key in ticker) {
-    // Gets all the exchange prices for the ticker
-    if (key.startsWith(text)) {
-      output += (formatNum(ticker[key]) + ' '
-        + key.replace(text, text + '/') + ' '); 
-      if (key.endsWith('ETH')) {
-        output += ('($' + formatBin(ticker[key], ticker.ETHUSDT) + ')\n');
-      } else if (key.endsWith('BTC')) {
-        output += ('($' + formatBin(ticker[key], ticker.BTCUSDT) + ')\n');
-      } else if (key.endsWith('BNB')) {
-        output += ('($' + formatBin(ticker[key], ticker.BNBUSDT) + ')\n');
-      } else {
-        output += '\n';
-      }
+  tradingPairs.forEach((item) => {
+    var exc = text + item;
+    if (ticker[exc]) {
+      output += (ticker[exc] + ' ' + exc.replace(text, text + '/') + ' ');
+      output += ('($' + formatBin(ticker[exc], ticker[item + 'USDT']) + ')\n');
     }
+  });
+  if (ticker[text + 'USDT']) {
+    output += (formatNum(ticker[text + 'USDT']) + ' ' + text + '/USDT\n');
   }
   return ((output == '') ? noTicker : output);
 }
