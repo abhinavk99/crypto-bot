@@ -42,8 +42,9 @@ bot.on(/^\/info (.+)$/, (msg, props) => {
   calls++;
   var text = props.match[1].substring(5);
   // Checks if the same argument has been passed into the command in the last 5 minutes
-  var diff = new Date() - new Date(parseInt(cache[text]['last_updated']) * 1000);
-  if (text in cache && Math.floor(diff / 60000 % 60) < 5) {
+  if (text in cache && Math.floor((new Date() - 
+      new Date(parseInt(cache[text]['last_updated']) * 1000)) / 
+      60000 % 60) < 5) {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
     if (isNaN(text)) {
@@ -85,8 +86,9 @@ bot.on('/global', (msg) => {
   }
   calls++;
   // Checks if global command has been called in last 5 minutes
-  var diff = new Date() - new Date(parseInt(cache['global']['last_updated']) * 1000);
-  if ('global' in cache && Math.floor(diff / 60000 % 60) < 5) {
+  if ('global' in cache && Math.floor((new Date() - 
+      new Date(parseInt(cache['global']['last_updated']) * 1000)) / 
+      60000 % 60) < 5) {
     return msg.reply.text(formatGlobalInfo(cache['global']), {asReply: true});
   }
   fetch(baseUrl + '/global/').then((res) => {
@@ -114,7 +116,7 @@ bot.on(/^\/(.+)$/, (msg, props) => {
         {asReply: true});
     } else {
       if (isNaN(text)) {
-        binance.prices((ticker) => {
+        binance.prices((error, ticker) => {
           bin[1] = new Date();
           bin[0] = ticker;
           console.log('Called Binance API');
