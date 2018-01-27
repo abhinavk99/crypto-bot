@@ -105,7 +105,10 @@ bot.on('/global', (msg) => {
 bot.on(/^\/(.+)$/, (msg, props) => {
     var text = props.match[1].toLowerCase();
   // Accounts for not responding to one of the other commands
-  if (!text.startsWith('global') && !text.startsWith('info')) {
+  if (!text.startsWith('global')
+      && !text.startsWith('info')
+      && /^[a-zA-Z]+$/.test(text)
+      && text.length < 5) {
     if (calls > 10) {
       return msg.reply.text(tooMuch, {asReply: true});
     }
