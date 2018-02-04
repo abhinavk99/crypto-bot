@@ -2,7 +2,7 @@
 
 Telegram bot that uses the CoinMarketCap API and the Binance API to get information on cryptocurrencies and the global cryptocurrency market.
 
-Talk to @coinmarketcap_info_bot on Telegram!
+Talk to @coinmarketcap_info_bot on Telegram! <https://t.me/coinmarketcap_info_bot>
 
 
 Commands:
