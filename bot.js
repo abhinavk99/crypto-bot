@@ -1,12 +1,11 @@
-const Config = require('./config.json');
 const TeleBot = require('telebot');
 const binance = require('node-binance-api');
 const fetch = require('node-fetch');
 
-const bot = new TeleBot(Config.telegramToken);
+const bot = new TeleBot(process.env.telegramToken);
 binance.options({
-  'APIKEY': Config.binanceKey,
-  'APISECRET': Config.binanceSecret
+  'APIKEY': process.env.binanceKey,
+  'APISECRET': process.env.binanceSecret
 });
 
 // 10 API calls a minute are allowed

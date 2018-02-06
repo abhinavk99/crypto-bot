@@ -1,0 +1,14 @@
+{
+  "name": "crypto-bot",
+  "description": "Telegram bot that gets information on cryptocurrencies",
+  "version": "1.0.0",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "telebot": "^1.2.3",
+    "node-fetch": "^1.7.3",
+    "node-binance-api": "^0.4.5"
+  }
+}
