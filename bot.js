@@ -102,7 +102,8 @@ bot.on('/global', (msg) => {
 
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/, (msg, props) => {
-    var text = props.match[1].toLowerCase();
+  var text = props.match[1].toLowerCase();
+  console.log(text);
   // Accounts for not responding to one of the other commands
   if (!text.startsWith('global')
       && !text.startsWith('info')
