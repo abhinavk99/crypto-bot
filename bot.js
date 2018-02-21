@@ -175,7 +175,7 @@ function formatGlobalInfo(info) {
   output += ('Number of Active Assets: ' + info['active_assets'] + '\n');
   output += ('Number of Active Markets: ' + info['active_markets'] + '\n\n');
 
-  output += ('https://coinmarketcap.com/charts/' + '/\n\n');
+  output += ('https://coinmarketcap.com/charts/' + '\n\n');
 
   return output + 'Last Updated: '
     + new Date(parseInt(info['last_updated']) * 1000).toString();
