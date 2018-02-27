@@ -1,0 +1,25 @@
+{
+  "name": "crypto-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot that gets information on cryptocurrencies",
+  "main": "bot.js",
+  "dependencies": {
+    "coinmarketcap-api": "^2.0.0",
+    "node-binance-api": "^0.3.0",
+    "telebot": "^1.2.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhinavk99/crypto-bot.git"
+  },
+  "author": "Abhinav Kasamsetty <abhinavkasamsetty@gmail.com> (http://github.com/abhinavk99)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/abhinavk99/crypto-bot/issues"
+  },
+  "homepage": "https://github.com/abhinavk99/crypto-bot#readme"
+}
