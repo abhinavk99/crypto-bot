@@ -1,12 +1,11 @@
-const Config = require('./config.json');
 const TeleBot = require('telebot');
 const binance = require('node-binance-api');
 const fetch = require('node-fetch');
 
-const bot = new TeleBot(Config.telegramToken);
+const bot = new TeleBot(process.env.telegramToken);
 binance.options({
-  'APIKEY': Config.binanceKey,
-  'APISECRET': Config.binanceSecret
+  'APIKEY': process.env.binanceKey,
+  'APISECRET': process.env.binanceSecret
 });
 
 // 10 API calls a minute are allowed
@@ -35,7 +34,7 @@ bot.on('/start', (msg) => {
 });
 
 // Ticker information from CoinMarketCap
-bot.on(/^\/info (.+)$/, (msg, props) => {
+bot.on(/^\/info (.+)$/i, (msg, props) => {
   if (calls > 10) {
     return msg.reply.text(tooMuch, {asReply: true});
   }
@@ -102,7 +101,7 @@ bot.on('/global', (msg) => {
 });
 
 // Latest exchange price from Binance
-bot.on(/^\/(.+)$/, (msg, props) => {
+bot.on(/^\/(.+)$/i, (msg, props) => {
   var text = props.match[1].toLowerCase();
   console.log(text);
   // Accounts for not responding to one of the other commands
