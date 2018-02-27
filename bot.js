@@ -34,7 +34,7 @@ bot.on('/start', (msg) => {
 });
 
 // Ticker information from CoinMarketCap
-bot.on(/^\/info (.+)$/, (msg, props) => {
+bot.on(/^\/info (.+)$/i, (msg, props) => {
   if (calls > 10) {
     return msg.reply.text(tooMuch, {asReply: true});
   }
@@ -101,7 +101,7 @@ bot.on('/global', (msg) => {
 });
 
 // Latest exchange price from Binance
-bot.on(/^\/(.+)$/, (msg, props) => {
+bot.on(/^\/(.+)$/i, (msg, props) => {
   var text = props.match[1].toLowerCase();
   console.log(text);
   // Accounts for not responding to one of the other commands
