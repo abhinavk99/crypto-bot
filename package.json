@@ -4,11 +4,23 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "telebot": "^1.2.3",
-    "node-fetch": "^1.7.3",
-    "node-binance-api": "^0.4.5"
-  }
+    "coinmarketcap-api": "^2.0.0",
+    "node-binance-api": "^0.3.0",
+    "telebot": "^1.2.3"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhinavk99/crypto-bot.git"
+  },
+  "author": "Abhinav Kasamsetty <abhinavkasamsetty@gmail.com> (http://github.com/abhinavk99)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/abhinavk99/crypto-bot/issues"
+  },
+  "homepage": "https://github.com/abhinavk99/crypto-bot#readme"
 }
