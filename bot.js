@@ -1,11 +1,12 @@
+const Config = require('./config.json');
 const TeleBot = require('telebot');
 const binance = require('node-binance-api');
 const fetch = require('node-fetch');
 
-const bot = new TeleBot(process.env.telegramToken);
+const bot = new TeleBot(Config.telegramToken);
 binance.options({
-  'APIKEY': process.env.binanceKey,
-  'APISECRET': process.env.binanceSecret
+  'APIKEY': Config.binanceKey,
+  'APISECRET': Config.binanceSecret
 });
 
 // 10 API calls a minute are allowed
@@ -119,7 +120,7 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
         {asReply: true});
     } else {
       if (isNaN(text)) {
-        binance.prices((error, ticker) => {
+        binance.prices((ticker) => {
           bin[1] = new Date();
           bin[0] = ticker;
           console.log('Called Binance API');
