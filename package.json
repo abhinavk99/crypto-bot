@@ -5,6 +5,7 @@
   "main": "bot.js",
   "dependencies": {
     "coinmarketcap-api": "^2.0.0",
+    "dotenv": "^5.0.1",
     "node-binance-api": "^0.3.0",
     "telebot": "^1.2.3"
   },
