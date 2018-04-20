@@ -1,8 +1,12 @@
 {
   "name": "crypto-bot",
-  "version": "1.0.0",
   "description": "Telegram bot that gets information on cryptocurrencies",
+  "version": "1.0.0",
   "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "coinmarketcap-api": "^2.0.0",
     "dotenv": "^5.0.1",
@@ -10,9 +14,6 @@
     "telebot": "^1.2.3"
   },
   "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abhinavk99/crypto-bot.git"
