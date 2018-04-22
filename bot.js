@@ -33,7 +33,8 @@ bot.on('/start', (msg) => {
   msg.reply.text('/info <name> for information on the coin with that name\n'
     + '/info <rank> for information on the coin with that rank\n'
     + '/global for total market information\n'
-    + '/<ticker> for latest Binance ticker price');
+    + '/<ticker> for latest Binance ticker price\n'
+    + '/chart <name> for chart on historical prices on the coin with that name');
 });
 
 // Ticker information from CoinMarketCap
