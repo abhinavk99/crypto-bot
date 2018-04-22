@@ -107,10 +107,11 @@ bot.on('/global', (msg) => {
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/i, (msg, props) => {
   var text = props.match[1].toLowerCase();
-  console.log(text);
+  console.log(props);
   // Accounts for not responding to one of the other commands
   if (!text.startsWith('global')
       && !text.startsWith('info')
+      && !props.match[0].startsWith('/chart')
       && /^[a-zA-Z]+$/.test(text)
       && text.length < 5) {
     if (calls > 10) {
