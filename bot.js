@@ -2,6 +2,8 @@ require('dotenv').config();
 const TeleBot = require('telebot');
 const binance = require('node-binance-api');
 const fetch = require('node-fetch');
+const webshot = require('webshot');
+const fs = require('fs');
 
 const bot = new TeleBot(process.env.TELEGRAM_TOKEN);
 binance.options({
@@ -125,13 +127,28 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
           bin[0] = ticker;
           console.log('Called Binance API');
           return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), 
-            {asReply: true});      
+            {asReply: true});
         });
       } else {
         return msg.reply.text(notNumber, {asReply: true});
       }
     }
   } 
+});
+
+bot.on(/^\/chart (.+)$/i, (msg, props) => {
+  if (calls > 10) {
+    return msg.reply.text(tooMuch, { asReply: true });
+  }
+  calls++;
+  var text = props.match[1].toLowerCase();
+
+  webshot(`https://coinmarketcap.com/currencies/${text}/#charts`, `${text}.png`, {
+      shotSize: { width: 'window', height: 630 },
+      shotOffset: { left: 35, right: 70, top: 690, bottom: 0 }
+    }, err => {
+      return msg.reply.photo(`${text}.png`, {asReply: true});
+  });
 });
 
 bot.start();
@@ -225,4 +242,16 @@ function resetCaches() {
   console.log('Resetting caches at ' + new Date().toString());
   cache = {};
   bin = [];
+  // Deletes all files ending with .png
+  fs.readdir('./', (err, files) => {
+    if (err) throw err;
+
+    for (const file of files) {
+      if (file.endsWith('.png')) {
+        fs.unlink(file, err => {
+          if (err) throw err;
+        });
+      }
+    }
+  });
 }

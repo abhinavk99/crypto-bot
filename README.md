@@ -35,3 +35,4 @@ Talk to @coinmarketcap_info_bot on Telegram! <https://t.me/coinmarketcap_info_bo
 | /info | Get info on coin with that CoinMarketCap rank | /info `<number>` | `/info 11` |
 | /global | Get total market information | /global | `/global` |
 | / | Get latest Binance ticker price for a coin | /`<ticker>` | `/ETH` |
+| /chart | Get chart on historical price for a coin | /chart `<coin>` | `/chart Bitcoin` |
