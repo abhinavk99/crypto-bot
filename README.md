@@ -34,3 +34,6 @@ Talk to @coinmarketcap_info_bot on Telegram! <https://t.me/coinmarketcap_info_bo
 | /global | Get total market information | /global | `/global` |
 | / | Get latest Binance ticker price for a coin | /`<ticker>` | `/ETH` |
 | /chart | Get chart on historical price for a coin | /chart `<coin>` | `/chart Bitcoin` |
+
+## Releases
+Releases start at v1.1.0 because I didn't know how to use git tags before then and manually changed the versions in package.json
