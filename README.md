@@ -13,16 +13,14 @@ Talk to @coinmarketcap_info_bot on Telegram! <https://t.me/coinmarketcap_info_bo
     ```
 2. Get Binance API key and secret from your Binance user settings.
 3. Get a Telegram bot token from [@BotFather](https://t.me/BotFather).
-4. Make a file called `config.json` in the repo directory.
+4. Make a file called `.env` in the repo directory.
 5. Copy/paste the below into the file.
-    ```javascript
-    {
-        "telegramToken" : "Telegram token here",
-        "binanceKey": "Binance API key here",
-        "binanceSecret": "Binance API secret here"
-    }
     ```
-6. Put your Telegram token and Binance API key and secret where it says to in the config.
+    TELEGRAM_TOKEN=Token here
+    BINANCE_KEY=Key here
+    BINANCE_SECRET=Secret here
+    ```
+6. Put your Telegram token and Binance API key and secret where it says to in the config. Do not put quotes around the tokens.
 7. Run the bot.
     ```console
     node bot.js
