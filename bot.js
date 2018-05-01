@@ -139,6 +139,8 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
 });
 
 bot.on(/^\/chart (.+)$/i, (msg, props) => {
+  return msg.reply.text('Deprecated', {asReply: true});
+
   if (calls > 10) {
     return msg.reply.text(tooMuch, { asReply: true });
   }
