@@ -1,7 +1,7 @@
 {
   "name": "crypto-bot",
   "description": "Telegram bot that gets information on cryptocurrencies",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
