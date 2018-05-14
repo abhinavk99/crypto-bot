@@ -30,7 +30,7 @@ const notNumber = 'A ticker can\'t be a number.';  // Ticker input was a number 
 const noTicker = 'Ticker not found.'  // Ticker not found in /<ticker>
 
 bot.on('/start', msg => {
-  msg.reply.text('/info <name> for information on the coin with that name\n'
+  msg.reply.text('/info <symbol> for information on the coin with that ticker symbol\n'
     + '/info <rank> for information on the coin with that rank\n'
     + '/global for total market information\n'
     + '/<ticker> for latest Binance ticker price\n'
