@@ -15,7 +15,7 @@ binance.options({
 var calls = 0;
 
 // Base CoinMarketCap API url
-const baseUrl = 'https://api.coinmarketcap.com/v1/';
+const baseUrl = 'https://api.coinmarketcap.com/v2/';
 
 // Caching CMC data to account for repeated calls
 var cache = {};
@@ -29,7 +29,7 @@ const noCurrency = 'No currency found with that name.';  // Currency not found i
 const notNumber = 'A ticker can\'t be a number.';  // Ticker input was a number in /<ticker>
 const noTicker = 'Ticker not found.'  // Ticker not found in /<ticker>
 
-bot.on('/start', (msg) => {
+bot.on('/start', msg => {
   msg.reply.text('/info <name> for information on the coin with that name\n'
     + '/info <rank> for information on the coin with that rank\n'
     + '/global for total market information\n'
@@ -51,25 +51,28 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
     if (isNaN(text)) {
-      // Bot replies with information on the currency if found
-      fetch(baseUrl + 'ticker/' + text.toLowerCase() + '/').then((res) => {
-        return res.json();
-      }).then((info) => {
-        // If currency found, info is a JS object wrapped in an array
-        // If not found, info is just a JS object
-        console.log(info);
-        // Info[0] is a JS object if currency found, otherwise it is undefined
-        if (info[0]) {
-          cache[text] = info[0];
-          return msg.reply.text(formatInfo(info[0]), {asReply: true});
-        } else {
+      fetch(baseUrl + 'listings').then(response => {
+        return response.json();
+      }).then(listings => {
+        // Look for currency with that symbol in the listings
+        var listObj = listings.data.find(listing => listing.symbol === text.toUpperCase());
+        // Listing of that currency not found
+        if (!listObj)
           return msg.reply.text(noCurrency, {asReply: true});
-        }
+        // Listing of that currency found
+        var id = listObj.id;
+
+        fetch(baseUrl + 'ticker/' + id + '/').then((res) => {
+          return res.json();
+        }).then(info => {
+          console.log(info);
+          return msg.reply.text(formatInfo(info.data), {asReply: true});
+        });
       });
     } else {
       fetch(baseUrl + 'ticker/?limit=' + text).then((res) => {
         return res.json();
-      }).then((info) => {
+      }).then(info => {
         // Info is an array of JS objects
         console.log(info);
         cache['global'] = info[parseInt(text) - 1]; 
@@ -81,7 +84,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
 });
 
 // Total market information from CoinMarketCap
-bot.on('/global', (msg) => {
+bot.on('/global', msg => {
   // Current time
   var d = new Date();
   if (calls > 10) {
@@ -107,7 +110,6 @@ bot.on('/global', (msg) => {
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/i, (msg, props) => {
   var text = props.match[1].toLowerCase();
-  console.log(props);
   // Accounts for not responding to one of the other commands
   if (!text.startsWith('global')
       && !text.startsWith('info')
@@ -141,18 +143,18 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
 bot.on(/^\/chart (.+)$/i, (msg, props) => {
   return msg.reply.text('Deprecated', {asReply: true});
 
-  if (calls > 10) {
-    return msg.reply.text(tooMuch, { asReply: true });
-  }
-  calls++;
-  var text = props.match[1].toLowerCase();
+  // if (calls > 10) {
+  //   return msg.reply.text(tooMuch, { asReply: true });
+  // }
+  // calls++;
+  // var text = props.match[1].toLowerCase();
 
-  webshot(`https://coinmarketcap.com/currencies/${text}/#charts`, `${text}.png`, {
-      shotSize: { width: 'window', height: 630 },
-      shotOffset: { left: 35, right: 70, top: 690, bottom: 0 }
-    }, err => {
-      return msg.reply.photo(`${text}.png`, {asReply: true});
-  });
+  // webshot(`https://coinmarketcap.com/currencies/${text}/#charts`, `${text}.png`, {
+  //     shotSize: { width: 'window', height: 630 },
+  //     shotOffset: { left: 35, right: 70, top: 690, bottom: 0 }
+  //   }, err => {
+  //     return msg.reply.photo(`${text}.png`, {asReply: true});
+  // });
 });
 
 bot.start();
@@ -162,22 +164,21 @@ function formatInfo(info) {
   var output = info['name'] + ' (' + info['symbol'] + ')\n';
   output += ('CoinMarketCap ID: ' + info['id'] + '\n')
   output += ('CoinMarketCap Rank: ' + info['rank'] + '\n');
-  output += ('https://coinmarketcap.com/currencies/' + info['id'] + '/\n\n');
+  output += ('https://coinmarketcap.com/currencies/' + info['website_slug'] + '/\n\n');
 
-  output += ('Price USD: $' + formatNum(info['price_usd']) + '\n');
-  output += ('Price BTC: ' + info['price_btc'] + ' BTC\n\n');
-
-  output += ('Market Cap: $' + formatNum(info['market_cap_usd']) + '\n');
-  output += ('24h Volume: $' + formatNum(info['24h_volume_usd']) + '\n');
-  output += ('Available Supply: ' + formatNum(info['available_supply']) + '\n');
+  var priceInfo = info['quotes']['USD'];
+  output += ('Price USD: $' + formatNum(priceInfo['price']) + '\n');
+  output += ('Market Cap: $' + formatNum(priceInfo['market_cap']) + '\n');
+  output += ('24h Volume: $' + formatNum(priceInfo['volume_24h']) + '\n');
+  output += ('Available Supply: ' + formatNum(info['circulating_supply']) + '\n');
   output += ('Total Supply: ' + formatNum(info['total_supply'])+ '\n');
   if (info['max_supply']) {
     output += ('Maximum Supply: ' + formatNum(info['max_supply']) + '\n');
   }
 
-  output += ('\nChange 1h: ' + formatNum(info['percent_change_1h']) + '%\n');
-  output += ('Change 24h: ' + formatNum(info['percent_change_24h']) + '%\n');
-  output += ('Change 7d: ' + formatNum(info['percent_change_7d']) + '%\n\n');
+  output += ('\nChange 1h: ' + formatNum(priceInfo['percent_change_1h']) + '%\n');
+  output += ('Change 24h: ' + formatNum(priceInfo['percent_change_24h']) + '%\n');
+  output += ('Change 7d: ' + formatNum(priceInfo['percent_change_7d']) + '%\n\n');
 
   return output + 'Last Updated: '
     + new Date(parseInt(info['last_updated']) * 1000).toString();
@@ -247,15 +248,15 @@ function resetCaches() {
   cache = {};
   bin = [];
   // Deletes all files ending with .png
-  fs.readdir('./', (err, files) => {
-    if (err) throw err;
+  // fs.readdir('./', (err, files) => {
+  //   if (err) throw err;
 
-    for (const file of files) {
-      if (file.endsWith('.png')) {
-        fs.unlink(file, err => {
-          if (err) throw err;
-        });
-      }
-    }
-  });
+  //   for (const file of files) {
+  //     if (file.endsWith('.png')) {
+  //       fs.unlink(file, err => {
+  //         if (err) throw err;
+  //       });
+  //     }
+  //   }
+  // });
 }
