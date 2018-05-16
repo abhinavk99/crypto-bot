@@ -14,19 +14,20 @@ binance.options({
 const cmcClient = new CoinMarketCap();
 
 // 10 API calls a minute are allowed
-var calls = 0;
+let calls = 0;
 
 // Caching CMC data to account for repeated calls
-var cache = {};
+let cache = {};
 
 // Caching Binance ticker data and time of most recent call
-var bin = [];
+let bin = [];
 
 // Constants for bot error message responses
 const tooMuch = 'You\'re using the bot too much!';  // Prevent overuse of bot calls
 const noCurrency = 'No currency found with that name.';  // Currency not found in /info <name>
 const notNumber = 'A ticker can\'t be a number.';  // Ticker input was a number in /<ticker>
 const noTicker = 'Ticker not found.'  // Ticker not found in /<ticker>
+const rankNotInRange = 'Given rank must be between 1 and 100.' // Max limit is 100
 
 bot.on('/start', msg => {
   msg.reply.text('/info <symbol> for information on the coin with that ticker symbol\n'
@@ -42,7 +43,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     return msg.reply.text(tooMuch, {asReply: true});
   }
   calls++;
-  var text = props.match[1].substring(5);
+  const text = props.match[1].substring(5);
   // Checks if the same argument has been passed into the command in the last 5 minutes
   if (text in cache && Math.floor((new Date() - 
       new Date(parseInt(cache[text]['last_updated']) * 1000)) / 
@@ -52,12 +53,12 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     if (isNaN(text)) {
       cmcClient.getListings().then(listings => {
         // Look for currency with that symbol in the listings
-        var listObj = listings.data.find(listing => listing.symbol === text.toUpperCase());
+        const listObj = listings.data.find(listing => listing.symbol === text.toUpperCase());
         // Listing of that currency not found
         if (!listObj)
           return msg.reply.text(noCurrency, {asReply: true});
         // Listing of that currency found
-        var id = listObj.id;
+        const id = listObj.id;
 
         cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
@@ -66,10 +67,13 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         });
       });
     } else {
-      cmcClient.getTicker({limit: text}).then(info => {
+      const rank = parseInt(text);
+      if (rank > 100 || rank === 0)
+        return msg.reply.text(rankNotInRange, {asReply: true});
+      cmcClient.getTicker({limit: rank}).then(info => {
         // Info is an array of JS objects
         console.log(info);
-        cache[text] = Object.values(info.data)[parseInt(text) - 1];
+        cache[text] = Object.values(info.data).find(res => res.rank === rank);
         return msg.reply.text(formatInfo(cache[text]), 
           {asReply: true});
       });
@@ -80,7 +84,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
 // Total market information from CoinMarketCap
 bot.on('/global', msg => {
   // Current time
-  var d = new Date();
+  const d = new Date();
   if (calls > 10) {
     return msg.reply.text(tooMuch, {asReply: true});
   }
@@ -101,7 +105,7 @@ bot.on('/global', msg => {
 
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/i, (msg, props) => {
-  var text = props.match[1].toLowerCase();
+  const text = props.match[1].toLowerCase();
   // Accounts for not responding to one of the other commands
   if (!text.startsWith('global')
       && !text.startsWith('info')
@@ -139,7 +143,7 @@ bot.on(/^\/chart (.+)$/i, (msg, props) => {
   //   return msg.reply.text(tooMuch, { asReply: true });
   // }
   // calls++;
-  // var text = props.match[1].toLowerCase();
+  // const text = props.match[1].toLowerCase();
 
   // webshot(`https://coinmarketcap.com/currencies/${text}/#charts`, `${text}.png`, {
   //     shotSize: { width: 'window', height: 630 },
@@ -153,12 +157,12 @@ bot.start();
 
 // Formats the output of the json for better readability
 function formatInfo(info) {
-  var output = info['name'] + ' (' + info['symbol'] + ')\n';
+  let output = info['name'] + ' (' + info['symbol'] + ')\n';
   output += ('CoinMarketCap ID: ' + info['id'] + '\n')
   output += ('CoinMarketCap Rank: ' + info['rank'] + '\n');
   output += ('https://coinmarketcap.com/currencies/' + info['website_slug'] + '/\n\n');
 
-  var priceInfo = info['quotes']['USD'];
+  const priceInfo = info['quotes']['USD'];
   output += ('Price USD: $' + formatNum(priceInfo['price']) + '\n');
   output += ('Market Cap: $' + formatNum(priceInfo['market_cap']) + '\n');
   output += ('24h Volume: $' + formatNum(priceInfo['volume_24h']) + '\n');
@@ -178,8 +182,8 @@ function formatInfo(info) {
 
 // Formats the output of the json for global CMC data
 function formatGlobalInfo(info) {
-  var marketInfo = info['quotes']['USD'];
-  var output = 'Total Market Cap: $'
+  const marketInfo = info['quotes']['USD'];
+  let output = 'Total Market Cap: $'
     + parseInt(marketInfo['total_market_cap']).toLocaleString() + '\n';
   output += ('Total 24h Volume: $'
     + parseInt(marketInfo['total_volume_24h']).toLocaleString() + '\n');
@@ -198,10 +202,10 @@ function formatGlobalInfo(info) {
 // Formats the output for Binance exchange price
 function formatBinanceInfo(ticker, text) {
   // The keys in the ticker object are exchanges in format equivalent to VENETH
-  var tradingPairs = ['ETH', 'BTC', 'BNB'];
-  var output = '';
+  const tradingPairs = ['ETH', 'BTC', 'BNB'];
+  let output = '';
   tradingPairs.forEach(item => {
-    var exc = text + item;
+    const exc = text + item;
     // Checks if there exists an exchange in the ticker with each of the pairs
     if (ticker[exc]) {
       output += (ticker[exc] + ' ' + exc.replace(text, text + '/') + ' ');
