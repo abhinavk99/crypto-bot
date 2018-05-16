@@ -46,7 +46,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
   const text = props.match[1].substring(5);
   // Checks if the same argument has been passed into the command in the last 5 minutes
   if (text in cache && Math.floor((new Date() - 
-      new Date(parseInt(cache[text].last_updated]) * 1000)) / 
+      new Date(parseInt(cache[text].last_updated) * 1000)) / 
       60000 % 60) < 5) {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
