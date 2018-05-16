@@ -16,18 +16,14 @@ const cmcClient = new CoinMarketCap();
 // 10 API calls a minute are allowed
 let calls = 0;
 
-// Caching CMC data to account for repeated calls
-let cache = {};
-
-// Caching Binance ticker data and time of most recent call
-let bin = [];
-
 // Constants for bot error message responses
 const tooMuch = 'You\'re using the bot too much!';  // Prevent overuse of bot calls
 const noCurrency = 'No currency found with that name.';  // Currency not found in /info <name>
 const notNumber = 'A ticker can\'t be a number.';  // Ticker input was a number in /<ticker>
 const noTicker = 'Ticker not found.'  // Ticker not found in /<ticker>
 const rankNotInRange = 'Given rank must be between 1 and 100.' // Max limit is 100
+
+const cacheFile = 'cache.json';
 
 bot.on('/start', msg => {
   msg.reply.text('/info <symbol> for information on the coin with that ticker symbol\n'
@@ -43,6 +39,8 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     return msg.reply.text(tooMuch, {asReply: true});
   }
   calls++;
+  let rawCache = fs.readFileSync(cacheFile);
+  let cache = JSON.parse(rawCache);
   const text = props.match[1].substring(5);
   // Checks if the same argument has been passed into the command in the last 5 minutes
   if (text in cache && Math.floor((new Date() - 
@@ -63,6 +61,9 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
           cache[text] = info.data;
+          fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
+            if (error) throw error;
+          });
           return msg.reply.text(formatInfo(info.data), {asReply: true});
         });
       });
@@ -73,8 +74,12 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
       cmcClient.getTicker({limit: rank}).then(info => {
         // Info is an array of JS objects
         console.log(info);
-        cache[text] = Object.values(info.data).find(res => res.rank === rank);
-        return msg.reply.text(formatInfo(cache[text]), 
+        const data = Object.values(info.data).find(res => res.rank === rank);
+        cache[text] = data;
+        fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
+          if (error) throw error;
+        });
+        return msg.reply.text(formatInfo(data),
           {asReply: true});
       });
     }
@@ -89,6 +94,8 @@ bot.on('/global', msg => {
     return msg.reply.text(tooMuch, {asReply: true});
   }
   calls++;
+  let rawCache = fs.readFileSync(cacheFile);
+  let cache = JSON.parse(rawCache);
   // Checks if global command has been called in last 5 minutes
   if ('global' in cache && Math.floor((new Date() - 
       new Date(parseInt(cache.global.last_updated) * 1000)) / 
@@ -99,6 +106,9 @@ bot.on('/global', msg => {
     // Info is a JS object
     console.log(info);
     cache.global = info.data;
+    fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
+      if (error) throw error;
+    });
     return msg.reply.text(formatGlobalInfo(info.data), {asReply: true});
   });
 });
@@ -116,15 +126,21 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
       return msg.reply.text(tooMuch, {asReply: true});
     }
     calls++;
+    let rawCache = fs.readFileSync(cacheFile);
+    let cache = JSON.parse(rawCache);
     // Checks if command has been called in the past 5 minutes
-    if (bin[0] !== undefined && Math.floor((new Date() - bin[1]) / 60000 % 60) < 5) {
-      return msg.reply.text(formatBinanceInfo(bin[0], text.toUpperCase()), 
+    if (cache.bin.data !== undefined &&
+        Math.floor((new Date() - cache.bin.lastUpdated) / 60000 % 60) < 5) {
+      return msg.reply.text(formatBinanceInfo(cache.bin.data, text.toUpperCase()), 
         {asReply: true});
     } else {
       if (isNaN(text)) {
         binance.prices((ticker) => {
-          bin[1] = new Date();
-          bin[0] = ticker;
+          cache.bin.lastUpdated = new Date();
+          cache.bin.data = ticker;
+          fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
+            if (error) throw error;
+          });
           console.log('Called Binance API');
           return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), 
             {asReply: true});
