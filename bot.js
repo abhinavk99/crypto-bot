@@ -46,7 +46,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
   const text = props.match[1].substring(5);
   // Checks if the same argument has been passed into the command in the last 5 minutes
   if (text in cache && Math.floor((new Date() - 
-      new Date(parseInt(cache[text]['last_updated']) * 1000)) / 
+      new Date(parseInt(cache[text].last_updated]) * 1000)) / 
       60000 % 60) < 5) {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
@@ -91,14 +91,14 @@ bot.on('/global', msg => {
   calls++;
   // Checks if global command has been called in last 5 minutes
   if ('global' in cache && Math.floor((new Date() - 
-      new Date(parseInt(cache['global']['last_updated']) * 1000)) / 
+      new Date(parseInt(cache.global.last_updated) * 1000)) / 
       60000 % 60) < 5) {
-    return msg.reply.text(formatGlobalInfo(cache['global']), {asReply: true});
+    return msg.reply.text(formatGlobalInfo(cache.global), {asReply: true});
   }
   cmcClient.getGlobal().then((info) => {
     // Info is a JS object
     console.log(info);
-    cache['global'] = info.data;
+    cache.global = info.data;
     return msg.reply.text(formatGlobalInfo(info.data), {asReply: true});
   });
 });
@@ -157,46 +157,46 @@ bot.start();
 
 // Formats the output of the json for better readability
 function formatInfo(info) {
-  let output = info['name'] + ' (' + info['symbol'] + ')\n';
-  output += ('CoinMarketCap ID: ' + info['id'] + '\n')
-  output += ('CoinMarketCap Rank: ' + info['rank'] + '\n');
-  output += ('https://coinmarketcap.com/currencies/' + info['website_slug'] + '/\n\n');
+  let output = info.name + ' (' + info.symbol + ')\n';
+  output += ('CoinMarketCap ID: ' + info.id + '\n')
+  output += ('CoinMarketCap Rank: ' + info.rank + '\n');
+  output += ('https://coinmarketcap.com/currencies/' + info.website_slug + '/\n\n');
 
-  const priceInfo = info['quotes']['USD'];
-  output += ('Price USD: $' + formatNum(priceInfo['price']) + '\n');
-  output += ('Market Cap: $' + formatNum(priceInfo['market_cap']) + '\n');
-  output += ('24h Volume: $' + formatNum(priceInfo['volume_24h']) + '\n');
-  output += ('Available Supply: ' + formatNum(info['circulating_supply']) + '\n');
-  output += ('Total Supply: ' + formatNum(info['total_supply'])+ '\n');
-  if (info['max_supply']) {
-    output += ('Maximum Supply: ' + formatNum(info['max_supply']) + '\n');
+  const priceInfo = info.quotes.USD;
+  output += ('Price USD: $' + formatNum(priceInfo.price) + '\n');
+  output += ('Market Cap: $' + formatNum(priceInfo.market_cap) + '\n');
+  output += ('24h Volume: $' + formatNum(priceInfo.volume_24h) + '\n');
+  output += ('Available Supply: ' + formatNum(info.circulating_supply) + '\n');
+  output += ('Total Supply: ' + formatNum(info.total_supply)+ '\n');
+  if (info.max_supply) {
+    output += ('Maximum Supply: ' + formatNum(info.max_supply) + '\n');
   }
 
-  output += ('\nChange 1h: ' + formatNum(priceInfo['percent_change_1h']) + '%\n');
-  output += ('Change 24h: ' + formatNum(priceInfo['percent_change_24h']) + '%\n');
-  output += ('Change 7d: ' + formatNum(priceInfo['percent_change_7d']) + '%\n\n');
+  output += ('\nChange 1h: ' + formatNum(priceInfo.percent_change_1h) + '%\n');
+  output += ('Change 24h: ' + formatNum(priceInfo.percent_change_24h) + '%\n');
+  output += ('Change 7d: ' + formatNum(priceInfo.percent_change_7d) + '%\n\n');
 
   return output + 'Last Updated: '
-    + new Date(parseInt(info['last_updated']) * 1000).toString();
+    + new Date(parseInt(info.last_updated) * 1000).toString();
 }
 
 // Formats the output of the json for global CMC data
 function formatGlobalInfo(info) {
-  const marketInfo = info['quotes']['USD'];
+  const marketInfo = info.quotes.USD;
   let output = 'Total Market Cap: $'
-    + parseInt(marketInfo['total_market_cap']).toLocaleString() + '\n';
+    + parseInt(marketInfo.total_market_cap).toLocaleString() + '\n';
   output += ('Total 24h Volume: $'
-    + parseInt(marketInfo['total_volume_24h']).toLocaleString() + '\n');
+    + parseInt(marketInfo.total_volume_24h).toLocaleString() + '\n');
   output += ('Bitcoin Percentage of Market Cap: '
-    + info['bitcoin_percentage_of_market_cap'] + '%\n\n');
+    + info.bitcoin_percentage_of_market_cap + '%\n\n');
 
-  output += ('Number of Active Currencies: ' + info['active_cryptocurrencies'] + '\n');
-  output += ('Number of Active Markets: ' + info['active_markets'] + '\n\n');
+  output += ('Number of Active Currencies: ' + info.active_cryptocurrencies + '\n');
+  output += ('Number of Active Markets: ' + info.active_markets + '\n\n');
 
   output += ('https://coinmarketcap.com/charts/' + '\n\n');
 
   return output + 'Last Updated: '
-    + new Date(parseInt(info['last_updated']) * 1000).toString();
+    + new Date(parseInt(info.last_updated) * 1000).toString();
 }
 
 // Formats the output for Binance exchange price
