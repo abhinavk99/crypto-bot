@@ -17,11 +17,11 @@ const cmcClient = new CoinMarketCap();
 let calls = 0;
 
 // Constants for bot error message responses
-const tooMuch = 'You\'re using the bot too much!';  // Prevent overuse of bot calls
-const noCurrency = 'No currency found with that name.';  // Currency not found in /info <name>
-const notNumber = 'A ticker can\'t be a number.';  // Ticker input was a number in /<ticker>
-const noTicker = 'Ticker not found.'  // Ticker not found in /<ticker>
-const rankNotInRange = 'Given rank must be between 1 and 100.' // Max limit is 100
+const TOO_MUCH = 'You\'re using the bot too much!';  // Prevent overuse of bot calls
+const NO_CURRENCY = 'No currency found with that name.';  // Currency not found in /info <name>
+const NOT_NUMBER = 'A ticker can\'t be a number.';  // Ticker input was a number in /<ticker>
+const NO_TICKER = 'Ticker not found.'  // Ticker not found in /<ticker>
+const RANK_NOT_IN_RANGE = 'Given rank must be between 1 and 100.' // Max limit is 100
 
 const cacheFile = 'cache.json';
 
@@ -36,7 +36,7 @@ bot.on('/start', msg => {
 // Ticker information from CoinMarketCap
 bot.on(/^\/info (.+)$/i, (msg, props) => {
   if (calls > 10) {
-    return msg.reply.text(tooMuch, {asReply: true});
+    return msg.reply.text(TOO_MUCH, {asReply: true});
   }
   calls++;
   let rawCache = fs.readFileSync(cacheFile);
@@ -54,7 +54,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         const listObj = listings.data.find(listing => listing.symbol === text.toUpperCase());
         // Listing of that currency not found
         if (!listObj)
-          return msg.reply.text(noCurrency, {asReply: true});
+          return msg.reply.text(NO_CURRENCY, {asReply: true});
         // Listing of that currency found
         const id = listObj.id;
 
@@ -70,7 +70,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     } else {
       const rank = parseInt(text);
       if (rank > 100 || rank === 0)
-        return msg.reply.text(rankNotInRange, {asReply: true});
+        return msg.reply.text(RANK_NOT_IN_RANGE, {asReply: true});
       cmcClient.getTicker({limit: rank}).then(info => {
         // Info is an array of JS objects
         console.log(info);
@@ -91,7 +91,7 @@ bot.on('/global', msg => {
   // Current time
   const d = new Date();
   if (calls > 10) {
-    return msg.reply.text(tooMuch, {asReply: true});
+    return msg.reply.text(TOO_MUCH, {asReply: true});
   }
   calls++;
   let rawCache = fs.readFileSync(cacheFile);
@@ -123,7 +123,7 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
       && /^[a-zA-Z]+$/.test(text)
       && text.length < 5) {
     if (calls > 10) {
-      return msg.reply.text(tooMuch, {asReply: true});
+      return msg.reply.text(TOO_MUCH, {asReply: true});
     }
     calls++;
     let rawCache = fs.readFileSync(cacheFile);
@@ -146,7 +146,7 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
             {asReply: true});
         });
       } else {
-        return msg.reply.text(notNumber, {asReply: true});
+        return msg.reply.text(NOT_NUMBER, {asReply: true});
       }
     }
   } 
@@ -156,7 +156,7 @@ bot.on(/^\/chart (.+)$/i, (msg, props) => {
   return msg.reply.text('Deprecated', {asReply: true});
 
   // if (calls > 10) {
-  //   return msg.reply.text(tooMuch, { asReply: true });
+  //   return msg.reply.text(TOO_MUCH, { asReply: true });
   // }
   // calls++;
   // const text = props.match[1].toLowerCase();
@@ -231,7 +231,7 @@ function formatBinanceInfo(ticker, text) {
   if (ticker[text + 'USDT']) {
     output += (formatNum(ticker[text + 'USDT']) + ' ' + text + '/USDT\n');
   }
-  return ((output == '') ? noTicker : output);
+  return ((output == '') ? NO_TICKER : output);
 }
 
 // Formats number string
