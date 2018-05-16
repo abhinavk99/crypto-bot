@@ -61,6 +61,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
 
         cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
+          cache[text] = info.data;
           return msg.reply.text(formatInfo(info.data), {asReply: true});
         });
       });
@@ -68,8 +69,8 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
       cmcClient.getTicker({limit: text}).then(info => {
         // Info is an array of JS objects
         console.log(info);
-        cache['global'] = info[parseInt(text) - 1]; 
-        return msg.reply.text(formatInfo(info[parseInt(text) - 1]), 
+        cache[text] = Object.values(info.data)[parseInt(text) - 1];
+        return msg.reply.text(formatInfo(cache[text]), 
           {asReply: true});
       });
     }
@@ -93,8 +94,8 @@ bot.on('/global', msg => {
   cmcClient.getGlobal().then((info) => {
     // Info is a JS object
     console.log(info);
-    cache['global'] = info;
-    return msg.reply.text(formatGlobalInfo(info), {asReply: true});
+    cache['global'] = info.data;
+    return msg.reply.text(formatGlobalInfo(info.data), {asReply: true});
   });
 });
 
@@ -177,15 +178,15 @@ function formatInfo(info) {
 
 // Formats the output of the json for global CMC data
 function formatGlobalInfo(info) {
+  var marketInfo = info['quotes']['USD'];
   var output = 'Total Market Cap: $'
-    + parseInt(info['total_market_cap_usd']).toLocaleString() + '\n';
+    + parseInt(marketInfo['total_market_cap']).toLocaleString() + '\n';
   output += ('Total 24h Volume: $'
-    + parseInt(info['total_24h_volume_usd']).toLocaleString() + '\n');
+    + parseInt(marketInfo['total_volume_24h']).toLocaleString() + '\n');
   output += ('Bitcoin Percentage of Market Cap: '
     + info['bitcoin_percentage_of_market_cap'] + '%\n\n');
 
-  output += ('Number of Active Currencies: ' + info['active_currencies'] + '\n');
-  output += ('Number of Active Assets: ' + info['active_assets'] + '\n');
+  output += ('Number of Active Currencies: ' + info['active_cryptocurrencies'] + '\n');
   output += ('Number of Active Markets: ' + info['active_markets'] + '\n\n');
 
   output += ('https://coinmarketcap.com/charts/' + '\n\n');
@@ -199,7 +200,7 @@ function formatBinanceInfo(ticker, text) {
   // The keys in the ticker object are exchanges in format equivalent to VENETH
   var tradingPairs = ['ETH', 'BTC', 'BNB'];
   var output = '';
-  tradingPairs.forEach((item) => {
+  tradingPairs.forEach(item => {
     var exc = text + item;
     // Checks if there exists an exchange in the ticker with each of the pairs
     if (ticker[exc]) {
