@@ -34,18 +34,12 @@ bot.on('/start', msg => {
 });
 
 // Ticker information from CoinMarketCap
-bot.on(/^\/info (.+)$/i, (msg, props) => {
-  if (calls > 10) {
-    return msg.reply.text(TOO_MUCH, {asReply: true});
-  }
-  calls++;
-  let rawCache = fs.readFileSync(cacheFile);
-  let cache = JSON.parse(rawCache);
+bot.on(/^\/info (.+)$/i, async (msg, props) => {
+  updateCalls(msg);
   const text = props.match[1].substring(5);
+  let cache = await readCache();
   // Checks if the same argument has been passed into the command in the last 5 minutes
-  if (text in cache && Math.floor((new Date() - 
-      new Date(parseInt(cache[text].last_updated) * 1000)) / 
-      60000 % 60) < 5) {
+  if (isValidCache(cache[text], cache[text].lastUpdated)) {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
     if (isNaN(text)) {
@@ -61,9 +55,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
           cache[text] = info.data;
-          fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
-            if (error) throw error;
-          });
+          writeCache(cache);
           return msg.reply.text(formatInfo(info.data), {asReply: true});
         });
       });
@@ -76,9 +68,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         console.log(info);
         const data = Object.values(info.data).find(res => res.rank === rank);
         cache[text] = data;
-        fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
-          if (error) throw error;
-        });
+        writeCache(cache);
         return msg.reply.text(formatInfo(data),
           {asReply: true});
       });
@@ -87,50 +77,33 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
 });
 
 // Total market information from CoinMarketCap
-bot.on('/global', msg => {
+bot.on('/global', async msg => {
   // Current time
   const d = new Date();
-  if (calls > 10) {
-    return msg.reply.text(TOO_MUCH, {asReply: true});
-  }
-  calls++;
-  let rawCache = fs.readFileSync(cacheFile);
-  let cache = JSON.parse(rawCache);
+  updateCalls(msg);
+  let cache = await readCache();
   // Checks if global command has been called in last 5 minutes
-  if ('global' in cache && Math.floor((new Date() - 
-      new Date(parseInt(cache.global.last_updated) * 1000)) / 
-      60000 % 60) < 5) {
+  if (isValidCache(cache.global, cache.global.lastUpdated)) {
     return msg.reply.text(formatGlobalInfo(cache.global), {asReply: true});
   }
   cmcClient.getGlobal().then((info) => {
     // Info is a JS object
     console.log(info);
     cache.global = info.data;
-    fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
-      if (error) throw error;
-    });
+    writeCache(cache);
     return msg.reply.text(formatGlobalInfo(info.data), {asReply: true});
   });
 });
 
 // Latest exchange price from Binance
-bot.on(/^\/(.+)$/i, (msg, props) => {
+bot.on(/^\/(.+)$/i, async (msg, props) => {
   const text = props.match[1].toLowerCase();
   // Accounts for not responding to one of the other commands
-  if (!text.startsWith('global')
-      && !text.startsWith('info')
-      && !props.match[0].startsWith('/chart')
-      && /^[a-zA-Z]+$/.test(text)
-      && text.length < 5) {
-    if (calls > 10) {
-      return msg.reply.text(TOO_MUCH, {asReply: true});
-    }
-    calls++;
-    let rawCache = fs.readFileSync(cacheFile);
-    let cache = JSON.parse(rawCache);
+  if (isValidTickerText(props, text)) {
+    updateCalls(msg);
+    let cache = await readCache();
     // Checks if command has been called in the past 5 minutes
-    if (cache.bin.data !== undefined &&
-        Math.floor((new Date() - cache.bin.lastUpdated) / 60000 % 60) < 5) {
+    if (isValidCache(cache.bin.data, cache.bin.lastUpdated)) {
       return msg.reply.text(formatBinanceInfo(cache.bin.data, text.toUpperCase()), 
         {asReply: true});
     } else {
@@ -138,9 +111,7 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
         binance.prices((ticker) => {
           cache.bin.lastUpdated = new Date();
           cache.bin.data = ticker;
-          fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
-            if (error) throw error;
-          });
+          writeCache(cache);
           console.log('Called Binance API');
           return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), 
             {asReply: true});
@@ -151,6 +122,20 @@ bot.on(/^\/(.+)$/i, (msg, props) => {
     }
   } 
 });
+
+// Check if valid ticker given for /<ticker>
+function isValidTickerText(props, text) {
+  return !text.startsWith('global')
+    && !text.startsWith('info')
+    && !props.match[0].startsWith('/chart')
+    && text.match(/^[a-zA-Z]+$/)
+    && text.length < 5;
+}
+
+// Check if the cache is valid
+function isValidCache(data, lastUpdated) {
+  return data && Math.floor((new Date() - lastUpdated) / 60000 % 60) < 5;
+}
 
 bot.on(/^\/chart (.+)$/i, (msg, props) => {
   return msg.reply.text('Deprecated', {asReply: true});
@@ -242,6 +227,31 @@ function formatNum(str) {
 // Formats the displayed estimated dollar price for Binance exchange values
 function formatBin(price1, price2) {
   return (parseFloat(price1) * parseFloat(price2)).toLocaleString();
+}
+
+// Reads the current JSON cache
+function readCache() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(cacheFile, (err, rawCache) => {
+      if (err) reject(err);
+      resolve(JSON.parse(rawCache));
+    });
+  });
+}
+
+// Writes JSON to cache file
+function writeCache(cache) {
+  fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
+    if (error) throw error;
+  });
+}
+
+// Checks for more than 30 calls a minute and updates number of calls
+function updateCalls(msg) {
+  if (calls > 10) {
+    return msg.reply.text(TOO_MUCH, { asReply: true });
+  }
+  calls++;
 }
 
 // Resets number of calls to 0 every minute
