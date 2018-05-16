@@ -1,8 +1,8 @@
 require('dotenv').config();
 const TeleBot = require('telebot');
 const binance = require('node-binance-api');
-const fetch = require('node-fetch');
-const webshot = require('webshot');
+const CoinMarketCap = require('coinmarketcap-api');
+// const webshot = require('webshot');
 const fs = require('fs');
 
 const bot = new TeleBot(process.env.TELEGRAM_TOKEN);
@@ -11,11 +11,10 @@ binance.options({
   'APISECRET': process.env.BINANCE_SECRET
 });
 
+const cmcClient = new CoinMarketCap();
+
 // 10 API calls a minute are allowed
 var calls = 0;
-
-// Base CoinMarketCap API url
-const baseUrl = 'https://api.coinmarketcap.com/v2/';
 
 // Caching CMC data to account for repeated calls
 var cache = {};
@@ -51,9 +50,7 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
     if (isNaN(text)) {
-      fetch(baseUrl + 'listings').then(response => {
-        return response.json();
-      }).then(listings => {
+      cmcClient.getListings().then(listings => {
         // Look for currency with that symbol in the listings
         var listObj = listings.data.find(listing => listing.symbol === text.toUpperCase());
         // Listing of that currency not found
@@ -62,17 +59,13 @@ bot.on(/^\/info (.+)$/i, (msg, props) => {
         // Listing of that currency found
         var id = listObj.id;
 
-        fetch(baseUrl + 'ticker/' + id + '/').then((res) => {
-          return res.json();
-        }).then(info => {
+        cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
           return msg.reply.text(formatInfo(info.data), {asReply: true});
         });
       });
     } else {
-      fetch(baseUrl + 'ticker/?limit=' + text).then((res) => {
-        return res.json();
-      }).then(info => {
+      cmcClient.getTicker({limit: text}).then(info => {
         // Info is an array of JS objects
         console.log(info);
         cache['global'] = info[parseInt(text) - 1]; 
@@ -97,9 +90,7 @@ bot.on('/global', msg => {
       60000 % 60) < 5) {
     return msg.reply.text(formatGlobalInfo(cache['global']), {asReply: true});
   }
-  fetch(baseUrl + '/global/').then((res) => {
-    return res.json();
-  }).then((info) => {
+  cmcClient.getGlobal().then((info) => {
     // Info is a JS object
     console.log(info);
     cache['global'] = info;

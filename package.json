@@ -8,10 +8,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "coinmarketcap-api": "^2.0.1",
     "dotenv": "^5.0.1",
     "fs": "0.0.1-security",
     "node-binance-api": "^0.3.0",
-    "node-fetch": "^2.1.2",
     "telebot": "^1.2.3",
     "webshot": "^0.18.0"
   },
