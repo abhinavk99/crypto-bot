@@ -263,22 +263,22 @@ function resetNumCalls() {
 }
 
 // Resets the caches every 2 hours
-resetCaches();
-setInterval(resetCaches, 7200000);
-function resetCaches() {
-  console.log('Resetting caches at ' + new Date().toString());
-  cache = {};
-  bin = [];
-  // Deletes all files ending with .png
-  // fs.readdir('./', (err, files) => {
-  //   if (err) throw err;
+// resetCaches();
+// setInterval(resetCaches, 7200000);
+// function resetCaches() {
+//   console.log('Resetting caches at ' + new Date().toString());
+//   cache = {};
+//   bin = [];
+//   // Deletes all files ending with .png
+//   fs.readdir('./', (err, files) => {
+//     if (err) throw err;
 
-  //   for (const file of files) {
-  //     if (file.endsWith('.png')) {
-  //       fs.unlink(file, err => {
-  //         if (err) throw err;
-  //       });
-  //     }
-  //   }
-  // });
-}
+//     for (const file of files) {
+//       if (file.endsWith('.png')) {
+//         fs.unlink(file, err => {
+//           if (err) throw err;
+//         });
+//       }
+//     }
+//   });
+// }
