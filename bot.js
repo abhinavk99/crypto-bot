@@ -3,7 +3,6 @@ const TeleBot = require('telebot');
 const binance = require('node-binance-api');
 const CoinMarketCap = require('coinmarketcap-api');
 // const webshot = require('webshot');
-const fs = require('fs');
 
 const bot = new TeleBot(process.env.TELEGRAM_TOKEN);
 binance.options({
@@ -23,7 +22,7 @@ const NOT_NUMBER = 'A ticker can\'t be a number.';  // Ticker input was a number
 const NO_TICKER = 'Ticker not found.'  // Ticker not found in /<ticker>
 const RANK_NOT_IN_RANGE = 'Given rank must be between 1 and 100.' // Max limit is 100
 
-const cacheFile = 'cache.json';
+let cache = { 'global': {}, 'bin': {} };
 
 bot.on('/start', msg => {
   msg.reply.text('/info <symbol> for information on the coin with that ticker symbol\n'
@@ -37,9 +36,8 @@ bot.on('/start', msg => {
 bot.on(/^\/info (.+)$/i, async (msg, props) => {
   updateCalls(msg);
   const text = props.match[1].substring(5);
-  let cache = await readCache();
   // Checks if the same argument has been passed into the command in the last 5 minutes
-  if (isValidCache(cache[text], cache[text].lastUpdated)) {
+  if (cache[text] && isValidCache(cache[text], cache[text].last_updated)) {
     return msg.reply.text(formatInfo(cache[text]), {asReply: true});
   } else {
     if (isNaN(text)) {
@@ -55,7 +53,6 @@ bot.on(/^\/info (.+)$/i, async (msg, props) => {
         cmcClient.getTicker({id: id}).then(info => {
           console.log(info);
           cache[text] = info.data;
-          writeCache(cache);
           return msg.reply.text(formatInfo(info.data), {asReply: true});
         });
       });
@@ -68,7 +65,6 @@ bot.on(/^\/info (.+)$/i, async (msg, props) => {
         console.log(info);
         const data = Object.values(info.data).find(res => res.rank === rank);
         cache[text] = data;
-        writeCache(cache);
         return msg.reply.text(formatInfo(data),
           {asReply: true});
       });
@@ -81,16 +77,14 @@ bot.on('/global', async msg => {
   // Current time
   const d = new Date();
   updateCalls(msg);
-  let cache = await readCache();
   // Checks if global command has been called in last 5 minutes
-  if (isValidCache(cache.global, cache.global.lastUpdated)) {
+  if (isValidCache(cache.global, cache.global.last_updated)) {
     return msg.reply.text(formatGlobalInfo(cache.global), {asReply: true});
   }
   cmcClient.getGlobal().then((info) => {
     // Info is a JS object
     console.log(info);
     cache.global = info.data;
-    writeCache(cache);
     return msg.reply.text(formatGlobalInfo(info.data), {asReply: true});
   });
 });
@@ -101,17 +95,15 @@ bot.on(/^\/(.+)$/i, async (msg, props) => {
   // Accounts for not responding to one of the other commands
   if (isValidTickerText(props, text)) {
     updateCalls(msg);
-    let cache = await readCache();
     // Checks if command has been called in the past 5 minutes
-    if (isValidCache(cache.bin.data, cache.bin.lastUpdated)) {
+    if (isValidCache(cache.bin.data, cache.bin.last_updated)) {
       return msg.reply.text(formatBinanceInfo(cache.bin.data, text.toUpperCase()), 
         {asReply: true});
     } else {
       if (isNaN(text)) {
         binance.prices((ticker) => {
-          cache.bin.lastUpdated = new Date();
+          cache.bin.last_updated = new Date();
           cache.bin.data = ticker;
-          writeCache(cache);
           console.log('Called Binance API');
           return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), 
             {asReply: true});
@@ -174,8 +166,13 @@ function formatInfo(info) {
   }
 
   output += ('\nChange 1h: ' + formatNum(priceInfo.percent_change_1h) + '%\n');
-  output += ('Change 24h: ' + formatNum(priceInfo.percent_change_24h) + '%\n');
-  output += ('Change 7d: ' + formatNum(priceInfo.percent_change_7d) + '%\n\n');
+  if (priceInfo.percent_change_24h) {
+    output += ('Change 24h: ' + formatNum(priceInfo.percent_change_24h) + '%\n');
+  }
+  if (priceInfo.percent_change_7d) {
+    output += ('Change 7d: ' + formatNum(priceInfo.percent_change_7d) + '%\n');
+  }
+  output += '\n';
 
   return output + 'Last Updated: '
     + new Date(parseInt(info.last_updated) * 1000).toString();
@@ -191,8 +188,8 @@ function formatGlobalInfo(info) {
   output += ('Bitcoin Percentage of Market Cap: '
     + info.bitcoin_percentage_of_market_cap + '%\n\n');
 
-  output += ('Number of Active Currencies: ' + info.active_cryptocurrencies + '\n');
-  output += ('Number of Active Markets: ' + info.active_markets + '\n\n');
+  output += ('Number of Active Currencies: ' + info.active_cryptocurrencies.toLocaleString() + '\n');
+  output += ('Number of Active Markets: ' + info.active_markets.toLocaleString() + '\n\n');
 
   output += ('https://coinmarketcap.com/charts/' + '\n\n');
 
@@ -227,23 +224,6 @@ function formatNum(str) {
 // Formats the displayed estimated dollar price for Binance exchange values
 function formatBin(price1, price2) {
   return (parseFloat(price1) * parseFloat(price2)).toLocaleString();
-}
-
-// Reads the current JSON cache
-function readCache() {
-  return new Promise((resolve, reject) => {
-    fs.readFile(cacheFile, (err, rawCache) => {
-      if (err) reject(err);
-      resolve(JSON.parse(rawCache));
-    });
-  });
-}
-
-// Writes JSON to cache file
-function writeCache(cache) {
-  fs.writeFile(cacheFile, JSON.stringify(cache, null, 4), error => {
-    if (error) throw error;
-  });
 }
 
 // Checks for more than 30 calls a minute and updates number of calls

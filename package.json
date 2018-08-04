@@ -10,7 +10,6 @@
   "dependencies": {
     "coinmarketcap-api": "^2.0.1",
     "dotenv": "^5.0.1",
-    "fs": "0.0.1-security",
     "node-binance-api": "^0.3.0",
     "telebot": "^1.2.3",
     "webshot": "^0.18.0"
