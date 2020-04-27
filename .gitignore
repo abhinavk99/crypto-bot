@@ -1,5 +1,4 @@
 .env
-config.json
 node_modules
 *.png
 cache.json
