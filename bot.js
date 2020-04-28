@@ -13,7 +13,6 @@ const cmcClient = new CoinMarketCap(process.env.COINMARKETCAP_KEY);
 
 const TOO_MUCH = "You're using the bot too much!";
 const NO_CURRENCY = 'No currency found with that name.';
-const NOT_NUMBER = "A ticker can't be a number.";
 const NO_TICKER = 'Ticker not found.';
 const RANK_NOT_IN_RANGE = 'Given rank must be greater than 1.';
 const NO_CURRENCY_RANK = 'No currency found with that rank.';
@@ -80,7 +79,6 @@ bot.on('/global', async (msg) => {
 // Latest exchange price from Binance
 bot.on(/^\/(.+)$/i, async (msg, props) => {
   const text = props.match[1].toLowerCase();
-  // Accounts for not responding to one of the other commands
   if (isValidTickerText(props, text)) {
     updateCalls(msg);
     // Checks if command has been called in the past 5 minutes
@@ -89,35 +87,15 @@ bot.on(/^\/(.+)$/i, async (msg, props) => {
         asReply: true,
       });
     } else {
-      if (isNaN(text)) {
-        binance.prices((ticker) => {
-          cache.bin.last_updated = new Date();
-          cache.bin.data = ticker;
-          console.log('Called Binance API');
-          return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), { asReply: true });
-        });
-      } else {
-        return msg.reply.text(NOT_NUMBER, { asReply: true });
-      }
+      binance.prices((_, ticker) => {
+        cache.bin.last_updated = new Date();
+        cache.bin.data = ticker;
+        console.log('Called Binance API');
+        return msg.reply.text(formatBinanceInfo(ticker, text.toUpperCase()), { asReply: true });
+      });
     }
   }
 });
-
-// Check if valid ticker given for /<ticker>
-function isValidTickerText(props, text) {
-  return (
-    !text.startsWith('global') &&
-    !text.startsWith('info') &&
-    !props.match[0].startsWith('/chart') &&
-    text.match(/^[a-zA-Z]+$/) &&
-    text.length < 5
-  );
-}
-
-// Check if the cache is valid
-function isValidCache(data, lastUpdated) {
-  return data && Math.floor(((new Date() - lastUpdated) / 60000) % 60) < 5;
-}
 
 bot.on(/^\/chart (.+)$/i, (msg) => {
   return msg.reply.text(DEPRECATED, { asReply: true });
@@ -195,6 +173,22 @@ function formatBinanceInfo(ticker, text) {
     output += formatNum(ticker[text + 'USDT']) + ' ' + text + '/USDT\n';
   }
   return output == '' ? NO_TICKER : output;
+}
+
+// Check if valid ticker given for /<ticker>
+function isValidTickerText(props, text) {
+  return (
+    !text.startsWith('global') &&
+    !text.startsWith('info') &&
+    !props.match[0].startsWith('/chart') &&
+    text.match(/^[a-zA-Z]+$/) &&
+    text.length < 5
+  );
+}
+
+// Check if the cache is valid
+function isValidCache(data, lastUpdated) {
+  return data && Math.floor(((new Date() - lastUpdated) / 60000) % 60) < 5;
 }
 
 // Formats number string
