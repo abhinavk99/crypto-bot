@@ -1,25 +1,22 @@
 require('dotenv').config();
 const TeleBot = require('telebot');
-const binance = require('node-binance-api');
+const Binance = require('node-binance-api');
 const CoinMarketCap = require('coinmarketcap-api');
 
 const bot = new TeleBot(process.env.TELEGRAM_TOKEN);
-binance.options({
+const binance = new Binance({
   APIKEY: process.env.BINANCE_KEY,
   APISECRET: process.env.BINANCE_SECRET,
 });
 
-const cmcClient = new CoinMarketCap();
+const cmcClient = new CoinMarketCap(process.env.COINMARKETCAP_KEY);
 
-// 10 API calls a minute are allowed
-let calls = 0;
-
-// Constants for bot error message responses
-const TOO_MUCH = "You're using the bot too much!"; // Prevent overuse of bot calls
-const NO_CURRENCY = 'No currency found with that name.'; // Currency not found in /info <name>
-const NOT_NUMBER = "A ticker can't be a number."; // Ticker input was a number in /<ticker>
-const NO_TICKER = 'Ticker not found.'; // Ticker not found in /<ticker>
-const RANK_NOT_IN_RANGE = 'Given rank must be between 1 and 100.'; // Max limit is 100
+const TOO_MUCH = "You're using the bot too much!";
+const NO_CURRENCY = 'No currency found with that name.';
+const NOT_NUMBER = "A ticker can't be a number.";
+const NO_TICKER = 'Ticker not found.';
+const RANK_NOT_IN_RANGE = 'Given rank must be greater than 1.';
+const NO_CURRENCY_RANK = 'No currency found with that rank.';
 
 let cache = { global: {}, bin: {} };
 
@@ -42,27 +39,22 @@ bot.on(/^\/info (.+)$/i, async (msg, props) => {
     return msg.reply.text(formatInfo(cache[text]), { asReply: true });
   } else {
     if (isNaN(text)) {
-      cmcClient.getListings().then((listings) => {
-        // Look for currency with that symbol in the listings
-        const listObj = listings.data.find((listing) => listing.symbol === text.toUpperCase());
-        // Listing of that currency not found
-        if (!listObj) return msg.reply.text(NO_CURRENCY, { asReply: true });
-        // Listing of that currency found
-        const id = listObj.id;
-
-        cmcClient.getTicker({ id: id }).then((info) => {
-          console.log(info);
-          cache[text] = info.data;
-          return msg.reply.text(formatInfo(info.data), { asReply: true });
-        });
+      const symbol = text.toUpperCase();
+      cmcClient.getQuotes({ symbol: symbol }).then((info) => {
+        console.log(info);
+        if (!('data' in info && symbol in info.data))
+          return msg.reply.text(NO_CURRENCY, { asReply: true });
+        const data = info.data[symbol];
+        cache[symbol] = data;
+        return msg.reply.text(formatInfo(data), { asReply: true });
       });
     } else {
       const rank = parseInt(text);
-      if (rank > 100 || rank === 0) return msg.reply.text(RANK_NOT_IN_RANGE, { asReply: true });
-      cmcClient.getTicker({ limit: rank }).then((info) => {
-        // Info is an array of JS objects
+      if (rank === 0) return msg.reply.text(RANK_NOT_IN_RANGE, { asReply: true });
+      cmcClient.getTickers({ start: rank, limit: 1 }).then((info) => {
         console.log(info);
-        const data = Object.values(info.data).find((res) => res.rank === rank);
+        if (info.data.length === 0) return msg.reply.text(NO_CURRENCY_RANK, { asReply: true });
+        const data = info.data[0];
         cache[text] = data;
         return msg.reply.text(formatInfo(data), { asReply: true });
       });
@@ -139,10 +131,10 @@ bot.start();
 function formatInfo(info) {
   let output = info.name + ' (' + info.symbol + ')\n';
   output += 'CoinMarketCap ID: ' + info.id + '\n';
-  output += 'CoinMarketCap Rank: ' + info.rank + '\n';
-  output += 'https://coinmarketcap.com/currencies/' + info.website_slug + '/\n\n';
+  output += 'CoinMarketCap Rank: ' + info.cmc_rank + '\n';
+  output += 'https://coinmarketcap.com/currencies/' + info.slug + '/\n\n';
 
-  const priceInfo = info.quotes.USD;
+  const priceInfo = info.quote.USD;
   output += 'Price USD: $' + formatNum(priceInfo.price) + '\n';
   output += 'Market Cap: $' + formatNum(priceInfo.market_cap) + '\n';
   output += '24h Volume: $' + formatNum(priceInfo.volume_24h) + '\n';
@@ -153,15 +145,15 @@ function formatInfo(info) {
   }
 
   output += '\nChange 1h: ' + formatNum(priceInfo.percent_change_1h) + '%\n';
-  if (priceInfo.percent_change_24h) {
+  if ('percent_change_24h' in priceInfo) {
     output += 'Change 24h: ' + formatNum(priceInfo.percent_change_24h) + '%\n';
   }
-  if (priceInfo.percent_change_7d) {
+  if ('percent_change_7d' in priceInfo) {
     output += 'Change 7d: ' + formatNum(priceInfo.percent_change_7d) + '%\n';
   }
   output += '\n';
 
-  return output + 'Last Updated: ' + new Date(parseInt(info.last_updated) * 1000).toString();
+  return output + 'Last Updated: ' + new Date(info.last_updated).toString();
 }
 
 // Formats the output of the json for global CMC data
@@ -217,7 +209,7 @@ function updateCalls(msg) {
   calls++;
 }
 
-// Resets number of calls to 0 every minute
+let calls = 0;
 resetNumCalls();
 setInterval(resetNumCalls, 60000);
 function resetNumCalls() {
