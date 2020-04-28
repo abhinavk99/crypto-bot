@@ -17,6 +17,7 @@ const NOT_NUMBER = "A ticker can't be a number.";
 const NO_TICKER = 'Ticker not found.';
 const RANK_NOT_IN_RANGE = 'Given rank must be greater than 1.';
 const NO_CURRENCY_RANK = 'No currency found with that rank.';
+const DEPRECATED = 'Deprecated';
 
 let cache = { global: {}, bin: {} };
 
@@ -64,15 +65,12 @@ bot.on(/^\/info (.+)$/i, async (msg, props) => {
 
 // Total market information from CoinMarketCap
 bot.on('/global', async (msg) => {
-  // Current time
-  const d = new Date();
   updateCalls(msg);
   // Checks if global command has been called in last 5 minutes
   if (isValidCache(cache.global, cache.global.last_updated)) {
     return msg.reply.text(formatGlobalInfo(cache.global), { asReply: true });
   }
   cmcClient.getGlobal().then((info) => {
-    // Info is a JS object
     console.log(info);
     cache.global = info.data;
     return msg.reply.text(formatGlobalInfo(info.data), { asReply: true });
@@ -122,7 +120,7 @@ function isValidCache(data, lastUpdated) {
 }
 
 bot.on(/^\/chart (.+)$/i, (msg) => {
-  return msg.reply.text('Deprecated', { asReply: true });
+  return msg.reply.text(DEPRECATED, { asReply: true });
 });
 
 bot.start();
@@ -158,18 +156,26 @@ function formatInfo(info) {
 
 // Formats the output of the json for global CMC data
 function formatGlobalInfo(info) {
-  const marketInfo = info.quotes.USD;
+  const marketInfo = info.quote.USD;
   let output =
     'Total Market Cap: $' + parseInt(marketInfo.total_market_cap).toLocaleString() + '\n';
   output += 'Total 24h Volume: $' + parseInt(marketInfo.total_volume_24h).toLocaleString() + '\n';
-  output += 'Bitcoin Percentage of Market Cap: ' + info.bitcoin_percentage_of_market_cap + '%\n\n';
+  output +=
+    'Altcoin Market Cap: $' + parseInt(marketInfo.altcoin_market_cap).toLocaleString() + '\n';
+  output +=
+    'Altcoin 24h Volume: $' + parseInt(marketInfo.altcoin_volume_24h).toLocaleString() + '\n';
+  output += 'Bitcoin Percentage of Market Cap: ' + info.btc_dominance + '%\n';
+  output += 'Ethereum Percentage of Market Cap: ' + info.eth_dominance + '%\n\n';
 
   output += 'Number of Active Currencies: ' + info.active_cryptocurrencies.toLocaleString() + '\n';
-  output += 'Number of Active Markets: ' + info.active_markets.toLocaleString() + '\n\n';
+  output += 'Number of Total Currencies: ' + info.total_cryptocurrencies.toLocaleString() + '\n';
+  output += 'Number of Active Markets: ' + info.active_market_pairs.toLocaleString() + '\n';
+  output += 'Number of Active Exchanges: ' + info.active_exchanges.toLocaleString() + '\n';
+  output += 'Number of Total Exchanges: ' + info.total_exchanges.toLocaleString() + '\n\n';
 
   output += 'https://coinmarketcap.com/charts/' + '\n\n';
 
-  return output + 'Last Updated: ' + new Date(parseInt(info.last_updated) * 1000).toString();
+  return output + 'Last Updated: ' + new Date(info.last_updated).toString();
 }
 
 // Formats the output for Binance exchange price
